@@ -32,7 +32,7 @@ ollama-llm-lab/
 
 1. **Start Ollama:**
 
-   In a dedicated terminal:
+   In a dedicated terminal (1 of 3 terminals needed):
    ```bash
    ollama serve
    ```
@@ -46,14 +46,14 @@ ollama-llm-lab/
 
 3. **Start the Flask API via Docker Compose:**
 
-   In your project folder:
+   In your project folder, run the following in a different terminal (2nd of the 3 terminals):
    ```bash
    docker compose up --build
    ```
 
 4. **Test the endpoint:**
 
-   In a new terminal:
+   In a new terminal (3rd of the 3 terminals):
    ```bash
    curl -X POST http://localhost:5050/chat \
      -H "Content-Type: application/json" \
