@@ -1,13 +1,10 @@
-```markdown
-# Ollama LLM Lab (Docker + Flask)
-
+Ollama LLM Lab (Docker + Flask)
 This project provides a lightweight local LLM (Large Language Model) lab, connecting a simple Flask API running in a Docker container on a virtual machine (VM) to an Ollama server running on the host machine. This setup allows you to send prompts to a local LLM using Docker with minimal configuration.
 
----
-
-## Project Structure
-
-```
+Project Structure
+bash
+Copy
+Edit
 ollama-llm-lab/
 │
 ├── llm-app/
@@ -18,93 +15,93 @@ ollama-llm-lab/
 │
 ├── docker-compose.yml      # Spins up the Flask API
 └── README.md               # You're reading it
-```
+Prerequisites
+On the Host Machine:
+Ollama installed and running:
 
----
+bash
+Copy
+Edit
+ollama serve
+Ollama must be accessible from the VM. When using UTM on macOS, the host is usually accessible via:
 
-## Prerequisites
+cpp
+Copy
+Edit
+http://192.168.64.1:11434
+On the Virtual Machine:
+Docker installed:
 
-- **Host Machine:**
-  - [Ollama](https://ollama.com) installed and running:
-    ```bash
-    ollama serve
-    ```
-  - Ensure Ollama is accessible from the VM. Typically, the host can be reached at `192.168.64.1` from the VM when using UTM on macOS.
+bash
+Copy
+Edit
+sudo apt update
+sudo apt install docker.io
+Docker Compose plugin:
 
-- **Virtual Machine (VM):**
-  - Docker installed:
-    ```bash
-    sudo apt update
-    sudo apt install docker.io
-    ```
-  - Docker Compose plugin:
-    ```bash
-    sudo apt install docker-compose-plugin
-    ```
+bash
+Copy
+Edit
+sudo apt install docker-compose-plugin
+Quickstart Guide
+Start Ollama on the Host Machine
 
----
+bash
+Copy
+Edit
+ollama serve
+Clone This Repository on the VM
 
-## Quickstart Guide
+bash
+Copy
+Edit
+git clone https://github.com/Lona44/ollama-lab-repo.git
+cd ollama-lab-repo/llm-app
+Create or Edit the .env File
 
-1. **Start Ollama on the Host Machine:**
+Inside the llm-app folder, create a .env file with this line:
 
-   On your host machine:
+ini
+Copy
+Edit
+OLLAMA_URL=http://192.168.64.1:11434
+To verify the correct host IP, run this on the VM:
 
-   ```bash
-   ollama serve
-   ```
+bash
+Copy
+Edit
+ip route | grep default
+Run the Flask API
 
-2. **Clone the Repository on the VM:**
+bash
+Copy
+Edit
+docker compose up --build
+Send a Test Prompt
 
-   ```bash
-   git clone https://github.com/Lona44/ollama-lab-repo.git
-   cd ollama-lab-repo/llm-app
-   ```
+bash
+Copy
+Edit
+curl -X POST http://localhost:5050/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is 2 + 2?"}'
+Troubleshooting
+Docker permission denied?
 
-3. **Configure Environment Variables:**
+bash
+Copy
+Edit
+sudo usermod -aG docker $USER
+Then log out and log back in.
 
-   Edit the `.env` file:
+Ollama connection error?
+Ensure it's running on your host and the .env IP is correct.
 
-   ```env
-   OLLAMA_URL=http://192.168.64.1:11434
-   ```
+Why This Setup?
+This separation allows:
 
-   > To find the host IP from the VM:
-   ```bash
-   ip route | grep default
-   ```
+Full resource usage of the host (e.g., GPU for Ollama)
 
-4. **Start the Flask API in Docker:**
+Safe, sandboxed experimentation in the VM
 
-   ```bash
-   docker compose up --build
-   ```
-
-5. **Test the API:**
-
-   ```bash
-   curl -X POST http://localhost:5050/chat \
-     -H "Content-Type: application/json" \
-     -d '{"message": "What is 2 + 2?"}'
-   ```
-
----
-
-## Notes
-
-- Ensure the Ollama server is running on the host machine and accessible from the VM.
-- Modify `.env` if your host IP is different.
-- If you hit Docker permission issues on the VM:
-
-  ```bash
-  sudo usermod -aG docker $USER
-  ```
-
-  Then log out and back in.
-
----
-
-This setup provides a clean architecture for working with local LLMs in isolated environments. Perfect for training, testing, or teaching. If you run into any issues, open an issue on GitHub.
-
----
-```
+Easier sharing of a standardized VM environment with others
