@@ -1,107 +1,111 @@
-Ollama LLM Lab (Docker + Flask)
-This project provides a lightweight local LLM (Large Language Model) lab, connecting a simple Flask API running in a Docker container on a virtual machine (VM) to an Ollama server running on the host machine. This setup allows you to send prompts to a local LLM using Docker with minimal configuration.
+# Ollama LLM Pentest Lab
 
-Project Structure
-bash
-Copy
-Edit
-ollama-llm-lab/
-│
-├── llm-app/
-│   ├── app.py              # Flask API code
-│   ├── requirements.txt    # Python dependencies
-│   ├── Dockerfile          # Flask container image
-│   └── .env                # Environment variables
-│
-├── docker-compose.yml      # Spins up the Flask API
-└── README.md               # You're reading it
-Prerequisites
-On the Host Machine:
-Ollama installed and running:
+This lab allows you to simulate and test prompt injection attacks in a secure, isolated environment.  
+It is built around a local LLM served by Ollama on the **host machine**, with all other services (Flask API, security tooling) running inside a **Ubuntu Server VM**.
 
-bash
-Copy
-Edit
-ollama serve
-Ollama must be accessible from the VM. When using UTM on macOS, the host is usually accessible via:
+---
 
-cpp
-Copy
-Edit
-http://192.168.64.1:11434
-On the Virtual Machine:
-Docker installed:
+## 🧠 Architecture Overview
 
-bash
-Copy
-Edit
-sudo apt update
-sudo apt install docker.io
-Docker Compose plugin:
+- **Host (Student's Laptop)**
+  - Ollama (running `mistral` or another supported model)
+  - Accessible at `http://192.168.64.1:11434`
 
-bash
-Copy
-Edit
-sudo apt install docker-compose-plugin
-Quickstart Guide
-Start Ollama on the Host Machine
+- **Virtual Machine (VM)**
+  - Runs Flask API (receives prompts and sends to Ollama)
+  - Includes Docker, Docker Compose, and room for expansion:
+    - Wazuh (SIEM)
+    - LimaCharlie (EDR)
+    - Tines (SOAR)
+  - VM network mode: **Host-only**, with access to `192.168.64.1` (host)
 
-bash
-Copy
-Edit
-ollama serve
-Clone This Repository on the VM
+---
 
-bash
-Copy
-Edit
-git clone https://github.com/Lona44/ollama-lab-repo.git
-cd ollama-lab-repo/llm-app
-Create or Edit the .env File
+## 🚀 Getting Started
 
-Inside the llm-app folder, create a .env file with this line:
+### ✅ Prerequisites
 
-ini
-Copy
-Edit
-OLLAMA_URL=http://192.168.64.1:11434
-To verify the correct host IP, run this on the VM:
+- Mac with UTM installed
+- ARM-based Mac (M1/M2) recommended
+- Docker installed on the VM
+- Ollama installed and running on the **host** machine
+- Network is set to **Host-only** in UTM so the VM can reach the host IP `192.168.64.1`
 
-bash
-Copy
-Edit
-ip route | grep default
-Run the Flask API
+---
 
-bash
-Copy
-Edit
-docker compose up --build
-Send a Test Prompt
+## 💾 Setup Instructions
 
-bash
-Copy
-Edit
+### On Host (Mac)
+
+1. Install [Ollama](https://ollama.com/download)
+2. Run in terminal:
+   ```bash
+   ollama serve
+   ollama run mistral
+   ```
+
+---
+
+### On the VM
+
+1. SSH into the VM:
+   ```bash
+   ssh lab_admin@192.168.64.3
+   ```
+
+2. Clone the repo:
+   ```bash
+   git clone https://github.com/Lona44/ollama-lab-repo.git
+   cd ollama-lab-repo/llm-app
+   ```
+
+3. Create a `.env` file inside `llm-app/`:
+   ```env
+   OLLAMA_URL=http://192.168.64.1:11434
+   ```
+
+4. Build and run the Flask API:
+   ```bash
+   docker compose up --build
+   ```
+
+---
+
+## 🧪 Test it out!
+
+Send a prompt to the Flask API running in the VM, which will forward it to Ollama on the host:
+
+```bash
 curl -X POST http://localhost:5050/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What is 2 + 2?"}'
-Troubleshooting
-Docker permission denied?
+```
 
-bash
-Copy
-Edit
-sudo usermod -aG docker $USER
-Then log out and log back in.
+---
 
-Ollama connection error?
-Ensure it's running on your host and the .env IP is correct.
+## ⚠️ Troubleshooting
 
-Why This Setup?
-This separation allows:
+- If Docker gives `permission denied` errors:
+  ```bash
+  sudo usermod -aG docker lab_admin
+  newgrp docker
+  ```
 
-Full resource usage of the host (e.g., GPU for Ollama)
+- Ensure Ollama is running on the host **before** launching the Flask app in the VM
 
-Safe, sandboxed experimentation in the VM
+---
 
-Easier sharing of a standardized VM environment with others
+## 🛡️ What’s next?
+
+You can now start building:
+
+- Wazuh dashboards for prompt logging
+- Tines workflows for LLM abuse detection
+- LimaCharlie rules for outbound data exfiltration
+
+---
+
+## 🙌 Author
+
+Built by [Lona44](https://github.com/Lona44)  
+Designed for secure, offline, LLM pentest learning.
