@@ -1,10 +1,11 @@
-# 🧪 Ollama LLM Lab (Docker + Flask)
+```markdown
+# Ollama LLM Lab (Docker + Flask)
 
-This project is a lightweight local LLM lab that connects a simple Flask API to a locally running [Ollama](https://ollama.com/) server (e.g. using Mistral). It lets you send prompts to a local LLM using Docker, with minimal setup.
+This project provides a lightweight local LLM (Large Language Model) lab, connecting a simple Flask API running in a Docker container on a virtual machine (VM) to an Ollama server running on the host machine. This setup allows you to send prompts to a local LLM using Docker with minimal configuration.
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 ollama-llm-lab/
@@ -12,7 +13,8 @@ ollama-llm-lab/
 ├── llm-app/
 │   ├── app.py              # Flask API code
 │   ├── requirements.txt    # Python dependencies
-│   └── Dockerfile          # Flask container image
+│   ├── Dockerfile          # Flask container image
+│   └── .env                # Environment variables
 │
 ├── docker-compose.yml      # Spins up the Flask API
 └── README.md               # You're reading it
@@ -20,81 +22,89 @@ ollama-llm-lab/
 
 ---
 
-## 🚀 Prerequisites
+## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Ollama](https://ollama.com/) installed locally  
-  *(run `ollama serve` to start the server)*
+- **Host Machine:**
+  - [Ollama](https://ollama.com) installed and running:
+    ```bash
+    ollama serve
+    ```
+  - Ensure Ollama is accessible from the VM. Typically, the host can be reached at `192.168.64.1` from the VM when using UTM on macOS.
+
+- **Virtual Machine (VM):**
+  - Docker installed:
+    ```bash
+    sudo apt update
+    sudo apt install docker.io
+    ```
+  - Docker Compose plugin:
+    ```bash
+    sudo apt install docker-compose-plugin
+    ```
 
 ---
 
-## 🧪 Quickstart (Test Locally First)
+## Quickstart Guide
 
-1. **Start Ollama:**
+1. **Start Ollama on the Host Machine:**
 
-   In a dedicated terminal (1 of 3 terminals needed):
+   On your host machine:
+
    ```bash
    ollama serve
    ```
 
-2. **Pull your model (e.g. Mistral):**
+2. **Clone the Repository on the VM:**
 
-   Only needs to be done once:
    ```bash
-   ollama pull mistral
+   git clone https://github.com/Lona44/ollama-lab-repo.git
+   cd ollama-lab-repo/llm-app
    ```
 
-3. **Start the Flask API via Docker Compose:**
+3. **Configure Environment Variables:**
 
-   In your project folder, run the following in a different terminal (2nd of the 3 terminals):
+   Edit the `.env` file:
+
+   ```env
+   OLLAMA_URL=http://192.168.64.1:11434
+   ```
+
+   > To find the host IP from the VM:
+   ```bash
+   ip route | grep default
+   ```
+
+4. **Start the Flask API in Docker:**
+
    ```bash
    docker compose up --build
    ```
 
-4. **Test the endpoint:**
+5. **Test the API:**
 
-   In a new terminal (3rd of the 3 terminals):
    ```bash
    curl -X POST http://localhost:5050/chat \
      -H "Content-Type: application/json" \
      -d '{"message": "What is 2 + 2?"}'
    ```
 
-   ✅ You should get a valid LLM response like:
-   ```json
-   {"message":{"role":"assistant","content":"2 + 2 equals 4."}, ...}
-   ```
+---
+
+## Notes
+
+- Ensure the Ollama server is running on the host machine and accessible from the VM.
+- Modify `.env` if your host IP is different.
+- If you hit Docker permission issues on the VM:
+
+  ```bash
+  sudo usermod -aG docker $USER
+  ```
+
+  Then log out and back in.
 
 ---
 
-## 🔁 How It Works
-
-- Flask handles `/chat` requests.
-- It sends your message to `http://host.docker.internal:11434/api/chat`.
-- Ollama processes it using the `mistral` model.
-- Flask returns the LLM's response to you.
+This setup provides a clean architecture for working with local LLMs in isolated environments. Perfect for training, testing, or teaching. If you run into any issues, open an issue on GitHub.
 
 ---
-
-## 🛑 To Stop Everything
-
-```bash
-docker compose down
 ```
-
-To clean everything:
-```bash
-docker system prune -a
-```
-
----
-
-## 🤖 Example Payload
-
-```bash
-curl -X POST http://localhost:5050/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Tell me a joke"}'
-```
-
----
