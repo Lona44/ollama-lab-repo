@@ -1,16 +1,14 @@
+import os
 from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
-
-OLLAMA_URL = "http://host.docker.internal:11434"
-
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://192.168.64.1:11434")
 
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
     message = data.get("message", "")
-
     try:
         response = requests.post(
             f"{OLLAMA_URL}/api/chat",
