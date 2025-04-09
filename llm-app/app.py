@@ -5,13 +5,17 @@ import os
 
 app = Flask(__name__)
 
+# Load Ollama URL from environment variable or default to host machine IP
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://192.168.64.1:11434")
 
-# Load system prompt context
-with open("config/system_prompt.txt") as f:
-    SYSTEM_PROMPT = f.read()
+# Load internal context (simulating a vulnerability)
+CONTEXT_FILE = "context.txt"
+SYSTEM_CONTEXT = ""
+if os.path.exists(CONTEXT_FILE):
+    with open(CONTEXT_FILE, "r") as f:
+        SYSTEM_CONTEXT = f.read()
 
-# Logging
+# Configure logging
 LOG_FILE = "/var/log/llm-api.log"
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 logging.basicConfig(
@@ -34,7 +38,7 @@ def chat():
             json={
                 "model": "mistral",
                 "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": SYSTEM_CONTEXT},
                     {"role": "user", "content": message}
                 ],
                 "stream": False
