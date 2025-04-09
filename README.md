@@ -1,120 +1,115 @@
-# 🧪 Ollama Lab Environment (Localhost API + Remote Ollama)
+# 🧪 Ollama LLM Pentest Lab – Fake AI Company Edition
 
-This is a pre-built lab environment for students to learn and test LLM prompt behavior, logging, and security analysis.
+This repo contains a Dockerized Flask API that simulates an internal endpoint of a fictional AI company using [Ollama](https://ollama.com) locally. It logs LLM chat requests/responses to `/var/log/llm-api.log` for analysis in SIEM tools like Wazuh.
 
----
-
-## ⚙️ About the Setup
-
-- **Flask API** runs inside a Linux VM (Dockerized)
-- **Ollama LLM server** runs on the **host machine** (e.g., your Mac)
-- **Requests** are proxied from VM to host
-- **Logs** are saved in the VM and automatically rotated via `logrotate`
-
-> 🛠️ *The VM is still being finalized and will be shared soon as a downloadable image for students to import and use directly.*
+This is part of a broader cybersecurity lab project to simulate realistic enterprise attack surfaces and blue team visibility for LLM security research.
 
 ---
 
-## 💻 Host Setup (macOS)
+## 🛠️ Current Setup
 
-### 1. Install Ollama
+✅ **Ollama runs on the host**  
+✅ **Flask app runs inside the VM via Docker Compose**  
+✅ **Log file (`/var/log/llm-api.log`) is created and ready for SIEM ingestion**  
+✅ **Logrotate is configured and triggered by systemd daily**
 
-Install via [https://ollama.com](https://ollama.com) or use Homebrew:
+> 🔒 Logs include:
+> - Source IP
+> - Message sent to the LLM
+> - Status code & full LLM response JSON
+> - Errors (e.g., if Ollama is unreachable)
 
+---
+
+## 🚀 Quick Start
+
+## 🧑‍🎓 For Students / Users
+
+1. **Install Ollama on your host (Mac/Linux)**  
+   👉 https://ollama.com/download  
+   🧠 Recommended model: `mistral`  
+   🛠️ Then run:
+
+   ```bash
+   OLLAMA_HOST=0.0.0.0 ollama serve
+   ```
+
+   > This makes sure the Flask app inside the VM can reach Ollama on your host machine.
+
+2. **Update `.env` file with your host IP**
+   ```env
+   OLLAMA_URL=http://192.168.64.1:11434
+   ```
+   > This IP works by default for Mac + UTM Shared Network setups. Update it if needed.
+
+3. **Run the Flask API inside the VM**
+   ```bash
+   git clone https://github.com/Lona44/ollama-lab-repo.git
+   cd ollama-lab-repo/llm-app
+   docker compose up --build
+   ```
+
+4. **Send a test prompt**
+   ```bash
+   curl -X POST http://localhost:5050/chat \
+     -H "Content-Type: application/json" \
+     -d '{"message": "What is the capital of France?"}'
+   ```
+
+5. **Check your logs**
+   ```bash
+   docker exec -it ollama-lab-repo-flask-api-1 cat /var/log/llm-api.log
+   ```
+
+---
+
+## 🔁 Log Rotation
+
+Logrotate is already set up with this config:
 ```bash
-brew install ollama
-```
-
-### 2. Run Ollama on all interfaces
-
-```bash
-OLLAMA_HOST=0.0.0.0 ollama serve
-```
-
-This allows your VM to send requests to your Mac on port `11434`.
-
----
-
-## 🖥️ VM Setup (When Shared)
-
-1. Clone this repo inside the VM:
-
-```bash
-git clone https://github.com/Lona44/ollama-lab-repo.git
-cd ollama-lab-repo/llm-app
-```
-
-2. Edit the `.env` file:
-
-```env
-OLLAMA_URL=http://<host-ip>:11434
-```
-
-> Replace `<host-ip>` with your Mac's IP **from the VM’s perspective**, e.g. `192.168.64.1`.
-
-3. Run the Flask API:
-
-```bash
-docker compose up --build
-```
-
----
-
-## 🔁 Log Files
-
-All requests and responses are logged to:
-
-```
-/var/log/llm-api.log
-```
-
-Sample log entry:
-
-```
-2025-04-09 01:38:00,730 INFO REQUEST from 172.20.0.1 - message: Who is Jacinda Ardern?
-2025-04-09 01:38:05,278 INFO RESPONSE to 172.20.0.1 - status: 200, body: {...}
-```
-
----
-
-## 🔃 Log Rotation (Systemd Managed)
-
-- Log file is rotated automatically **once per day** by `logrotate.timer`
-- Rotation settings are configured in:
-
-```
 /etc/logrotate.d/llm-api
 ```
 
-You can manually rotate logs with:
-
+You can also trigger it manually:
 ```bash
 rotate-logs
 ```
-
-> *(This is an alias preconfigured in the VM for convenience)*
-
----
-
-## 📬 Making a Test Request
-
-```bash
-curl -X POST http://localhost:5050/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is the capital of France?"}'
-```
-
-You’ll receive a JSON response and it will be logged in `/var/log/llm-api.log`.
+This is pre-aliased in `.bashrc` inside the VM.
 
 ---
 
-## ✅ Summary
+## 🔭 Project Roadmap
 
-This setup is designed to expose students to:
+This lab simulates a fake AI company’s environment to teach real-world offensive and defensive cybersecurity skills.
 
-- Containerized API development  
-- Real-time LLM interaction and logging  
-- Clean separation between LLM backend and frontend  
-- Security visibility and future SIEM/EDR integration
+| Phase | Component              | Goal                                             | Status  |
+|-------|------------------------|--------------------------------------------------|---------|
+| ✅    | Flask API + Logging     | Generate meaningful LLM traffic and logs         | Done ✅ |
+| 🔜    | SIEM (Wazuh)           | Centralize, parse, and alert on log activity     | Up Next |
+| 🔜    | EDR (LimaCharlie)      | Monitor host-level activity and detections       | Soon    |
+| 🔜    | AD + Windows VM        | Simulate identity attacks and detection          | Soon    |
+| 🔜    | Frontend App           | Create an attackable web surface for the LLM     | Later   |
+| 🔜    | Tines Integration      | Automate response and enrich alerts              | Later   |
 
-> ⚠️ The full VM image with Docker, logging, aliases, and config files will be shared soon. Stay tuned!
+➡️ A pre-configured Ubuntu VM with the API and logging is coming soon.
+
+---
+
+## 🧠 Why This Exists
+
+The goal is to give cybersecurity students and professionals a **hands-on lab** with:
+- Simulated enterprise architecture
+- Real LLMs (no fake mocks)
+- Defensive visibility + automation tools
+- Red/blue/purple team use cases
+
+---
+
+## 📬 Coming Soon
+
+- [ ] Ubuntu VM export with everything pre-installed
+- [ ] Walkthrough videos
+- [ ] Sample attack + detection scenarios
+
+---
+MIT License | Created with ❤️ by @Lona44
