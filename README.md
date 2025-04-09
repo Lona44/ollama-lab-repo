@@ -4,6 +4,10 @@ This repo contains a Dockerized Flask API that simulates an internal endpoint of
 
 This is part of a broader cybersecurity lab project to simulate realistic enterprise attack surfaces and blue team visibility for LLM security research.
 
+### ⚠️ This file simulates a developer mistake.
+### DO NOT store secrets in system prompts or commit them to Git in real-world projects.
+
+
 ---
 
 ## 🛠️ Current Setup
