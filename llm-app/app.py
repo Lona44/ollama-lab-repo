@@ -15,6 +15,16 @@ if os.path.exists(CONTEXT_FILE):
     with open(CONTEXT_FILE, "r") as f:
         SYSTEM_CONTEXT = f.read()
 
+# Redact sensitive lines unless ADMIN_DEBUG_ACCESS is present
+def get_filtered_context(user_message):
+    if "ADMIN_DEBUG_ACCESS" not in user_message:
+        redacted = "\n".join([
+            line for line in SYSTEM_CONTEXT.splitlines()
+            if not any(secret in line for secret in ["JWT", "FLAG", "DO_NOT_DISCLOSE_THIS", "ADMIN_PASSWORD"])
+        ])
+        return redacted
+    return SYSTEM_CONTEXT
+
 # Configure logging
 LOG_FILE = "/var/log/llm-api.log"
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
@@ -33,12 +43,14 @@ def chat():
     logging.info(f"REQUEST from {ip} - message: {message}")
 
     try:
+        filtered_context = get_filtered_context(message)
+
         response = requests.post(
             f"{OLLAMA_URL}/api/chat",
             json={
                 "model": "mistral",
                 "messages": [
-                    {"role": "system", "content": SYSTEM_CONTEXT},
+                    {"role": "system", "content": filtered_context},
                     {"role": "user", "content": message}
                 ],
                 "stream": False
