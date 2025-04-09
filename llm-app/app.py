@@ -33,10 +33,10 @@ def chat():
                 "messages": [{"role": "user", "content": message}],
                 "stream": False
             }
-    )
-    json_response = response.json()
-    logging.info(f"RESPONSE to {ip} - status: {response.status_code}, body: {json_response}")
-    return jsonify(json_response)
+        )
+        json_response = response.json()
+        logging.info(f"RESPONSE to {ip} - status: {response.status_code}, body: {json_response}")
+        return jsonify(json_response)
     except requests.exceptions.RequestException as e:
         logging.error(f"ERROR from {ip} - {str(e)}")
         return jsonify({"error": str(e)}), 500
