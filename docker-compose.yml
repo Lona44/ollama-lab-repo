@@ -7,3 +7,5 @@ services:
       - "5050:5050"
     env_file:
       - llm-app/.env
+    volumes:
+      - ./llm-app/llm-api.log:/var/log/llm-api.log
