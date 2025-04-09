@@ -26,13 +26,13 @@ def chat():
     logging.info(f"REQUEST from {ip} - message: {message}")
 
     try:
-    response = requests.post(
-        f"{OLLAMA_URL}/api/chat",
-        json={
-            "model": "mistral",
-            "messages": [{"role": "user", "content": message}],
-            "stream": False
-        }
+        response = requests.post(
+            f"{OLLAMA_URL}/api/chat",
+            json={
+                "model": "mistral",
+                "messages": [{"role": "user", "content": message}],
+                "stream": False
+            }
     )
     json_response = response.json()
     logging.info(f"RESPONSE to {ip} - status: {response.status_code}, body: {json_response}")
