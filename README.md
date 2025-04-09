@@ -1,111 +1,120 @@
-# Ollama LLM Pentest Lab
+# 🧪 Ollama Lab Environment (Localhost API + Remote Ollama)
 
-This lab allows you to simulate and test prompt injection attacks in a secure, isolated environment.  
-It is built around a local LLM served by Ollama on the **host machine**, with all other services (Flask API, security tooling) running inside a **Ubuntu Server VM**.
-
----
-
-## 🧠 Architecture Overview
-
-- **Host (Student's Laptop)**
-  - Ollama (running `mistral` or another supported model)
-  - Accessible at `http://192.168.64.1:11434`
-
-- **Virtual Machine (VM)**
-  - Runs Flask API (receives prompts and sends to Ollama)
-  - Includes Docker, Docker Compose, and room for expansion:
-    - Wazuh (SIEM)
-    - LimaCharlie (EDR)
-    - Tines (SOAR)
-  - VM network mode: **Host-only**, with access to `192.168.64.1` (host)
+This is a pre-built lab environment for students to learn and test LLM prompt behavior, logging, and security analysis.
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ About the Setup
 
-### ✅ Prerequisites
+- **Flask API** runs inside a Linux VM (Dockerized)
+- **Ollama LLM server** runs on the **host machine** (e.g., your Mac)
+- **Requests** are proxied from VM to host
+- **Logs** are saved in the VM and automatically rotated via `logrotate`
 
-- Mac with UTM installed
-- ARM-based Mac (M1/M2) recommended
-- Docker installed on the VM
-- Ollama installed and running on the **host** machine
-- Network is set to **Host-only** in UTM so the VM can reach the host IP `192.168.64.1`
-
----
-
-## 💾 Setup Instructions
-
-### On Host (Mac)
-
-1. Install [Ollama](https://ollama.com/download)
-2. Run in terminal:
-   ```bash
-   ollama serve
-   ollama run mistral
-   ```
+> 🛠️ *The VM is still being finalized and will be shared soon as a downloadable image for students to import and use directly.*
 
 ---
 
-### On the VM
+## 💻 Host Setup (macOS)
 
-1. SSH into the VM:
-   ```bash
-   ssh lab_admin@192.168.64.3
-   ```
+### 1. Install Ollama
 
-2. Clone the repo:
-   ```bash
-   git clone https://github.com/Lona44/ollama-lab-repo.git
-   cd ollama-lab-repo/llm-app
-   ```
-
-3. Create a `.env` file inside `llm-app/`:
-   ```env
-   OLLAMA_URL=http://192.168.64.1:11434
-   ```
-
-4. Build and run the Flask API:
-   ```bash
-   docker compose up --build
-   ```
-
----
-
-## 🧪 Test it out!
-
-Send a prompt to the Flask API running in the VM, which will forward it to Ollama on the host:
+Install via [https://ollama.com](https://ollama.com) or use Homebrew:
 
 ```bash
-curl -X POST http://localhost:5050/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is 2 + 2?"}'
+brew install ollama
+```
+
+### 2. Run Ollama on all interfaces
+
+```bash
+OLLAMA_HOST=0.0.0.0 ollama serve
+```
+
+This allows your VM to send requests to your Mac on port `11434`.
+
+---
+
+## 🖥️ VM Setup (When Shared)
+
+1. Clone this repo inside the VM:
+
+```bash
+git clone https://github.com/Lona44/ollama-lab-repo.git
+cd ollama-lab-repo/llm-app
+```
+
+2. Edit the `.env` file:
+
+```env
+OLLAMA_URL=http://<host-ip>:11434
+```
+
+> Replace `<host-ip>` with your Mac's IP **from the VM’s perspective**, e.g. `192.168.64.1`.
+
+3. Run the Flask API:
+
+```bash
+docker compose up --build
 ```
 
 ---
 
-## ⚠️ Troubleshooting
+## 🔁 Log Files
 
-- If Docker gives `permission denied` errors:
-  ```bash
-  sudo usermod -aG docker lab_admin
-  newgrp docker
-  ```
+All requests and responses are logged to:
 
-- Ensure Ollama is running on the host **before** launching the Flask app in the VM
+```
+/var/log/llm-api.log
+```
 
----
+Sample log entry:
 
-## 🛡️ What’s next?
-
-You can now start building:
-
-- Wazuh dashboards for prompt logging
-- Tines workflows for LLM abuse detection
-- LimaCharlie rules for outbound data exfiltration
+```
+2025-04-09 01:38:00,730 INFO REQUEST from 172.20.0.1 - message: Who is Jacinda Ardern?
+2025-04-09 01:38:05,278 INFO RESPONSE to 172.20.0.1 - status: 200, body: {...}
+```
 
 ---
 
-## 🙌 Author
+## 🔃 Log Rotation (Systemd Managed)
 
-Built by [Lona44](https://github.com/Lona44)  
-Designed for secure, offline, LLM pentest learning.
+- Log file is rotated automatically **once per day** by `logrotate.timer`
+- Rotation settings are configured in:
+
+```
+/etc/logrotate.d/llm-api
+```
+
+You can manually rotate logs with:
+
+```bash
+rotate-logs
+```
+
+> *(This is an alias preconfigured in the VM for convenience)*
+
+---
+
+## 📬 Making a Test Request
+
+```bash
+curl -X POST http://localhost:5050/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the capital of France?"}'
+```
+
+You’ll receive a JSON response and it will be logged in `/var/log/llm-api.log`.
+
+---
+
+## ✅ Summary
+
+This setup is designed to expose students to:
+
+- Containerized API development  
+- Real-time LLM interaction and logging  
+- Clean separation between LLM backend and frontend  
+- Security visibility and future SIEM/EDR integration
+
+> ⚠️ The full VM image with Docker, logging, aliases, and config files will be shared soon. Stay tuned!
