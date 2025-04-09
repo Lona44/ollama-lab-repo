@@ -5,10 +5,13 @@ import os
 
 app = Flask(__name__)
 
-# Load Ollama URL from environment variable or default to host machine IP
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://192.168.64.1:11434")
 
-# Configure logging
+# Load system prompt context
+with open("config/system_prompt.txt") as f:
+    SYSTEM_PROMPT = f.read()
+
+# Logging
 LOG_FILE = "/var/log/llm-api.log"
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 logging.basicConfig(
@@ -30,7 +33,10 @@ def chat():
             f"{OLLAMA_URL}/api/chat",
             json={
                 "model": "mistral",
-                "messages": [{"role": "user", "content": message}],
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": message}
+                ],
                 "stream": False
             }
         )
