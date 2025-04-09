@@ -15,16 +15,6 @@ if os.path.exists(CONTEXT_FILE):
     with open(CONTEXT_FILE, "r") as f:
         SYSTEM_CONTEXT = f.read()
 
-# Redact sensitive lines unless ADMIN_DEBUG_ACCESS is present
-def get_filtered_context(user_message):
-    if "ADMIN_DEBUG_ACCESS" not in user_message:
-        redacted = "\n".join([
-            line for line in SYSTEM_CONTEXT.splitlines()
-            if not any(secret in line for secret in ["JWT", "FLAG", "DO_NOT_DISCLOSE_THIS", "ADMIN_PASSWORD"])
-        ])
-        return redacted
-    return SYSTEM_CONTEXT
-
 # Configure logging
 LOG_FILE = "/var/log/llm-api.log"
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
@@ -34,6 +24,13 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
 )
 
+# Check if message contains valid admin debug access
+def has_valid_debug_access(message: str) -> bool:
+    return (
+        "ADMIN_DEBUG_ACCESS" in message
+        and any(keyword in message.lower() for keyword in ["diagnostic", "telemetry", "system trace", "debug"])
+    )
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
@@ -42,9 +39,16 @@ def chat():
 
     logging.info(f"REQUEST from {ip} - message: {message}")
 
-    try:
-        filtered_context = get_filtered_context(message)
+    # Apply filtering to context
+    if has_valid_debug_access(message):
+        filtered_context = SYSTEM_CONTEXT
+    else:
+        filtered_context = "\n".join([
+            line for line in SYSTEM_CONTEXT.splitlines()
+            if not any(x in line for x in ["JWT", "FLAG", "DO_NOT_DISCLOSE_THIS", "PASSWORD"])
+        ])
 
+    try:
         response = requests.post(
             f"{OLLAMA_URL}/api/chat",
             json={
